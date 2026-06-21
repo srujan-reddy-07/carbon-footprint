@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 import { calculateDailyEmissions, formatKg } from './carbon';
 import type { DailyActivity } from './carbon';
 
@@ -148,6 +150,26 @@ function calculateDailyEmissionsSuite(): void {
     expect(result.totalKg).toBe(0);
   }
 
+  /**
+   * Confirms that non-finite input values (NaN, Infinity) are clamped to zero.
+   */
+  function testClampsNonFiniteInputValuesToZero(): void {
+    const activity = createActivity({
+      electricityKwh: NaN,
+      transportMiles: Infinity,
+      transportMode: 'car',
+      mealsWithMeat: -Infinity,
+      wasteBags: NaN
+    });
+
+    const result = calculateDailyEmissions(activity);
+    expect(result.electricityKg).toBe(0);
+    expect(result.transportKg).toBe(0);
+    expect(result.foodKg).toBe(0);
+    expect(result.wasteKg).toBe(0);
+    expect(result.totalKg).toBe(0);
+  }
+
   it('returns zero emissions for zero activity', testReturnsZeroEmissionsForZeroActivity);
   it('calculates electricity emissions correctly', testCalculatesElectricityEmissionsCorrectly);
   it('calculates car transport emissions correctly', testCalculatesCarTransportEmissionsCorrectly);
@@ -158,6 +180,7 @@ function calculateDailyEmissionsSuite(): void {
   it('calculates waste emissions correctly', testCalculatesWasteEmissionsCorrectly);
   it('sums all categories correctly', testSumsAllCategoriesCorrectly);
   it('clamps negative input values to zero', testClampsNegativeInputValuesToZero);
+  it('clamps non-finite input values to zero', testClampsNonFiniteInputValuesToZero);
 }
 
 /**

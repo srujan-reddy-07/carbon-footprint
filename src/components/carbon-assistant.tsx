@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DailyActivity, HouseholdType, TransportMode } from '../lib/carbon';
 import { calculateDailyEmissions, formatKg } from '../lib/carbon';
 import { generateMicroActions } from '../lib/recommendations';
+import type { MicroAction } from '../lib/recommendations';
 
 type ChatMessage = {
   role: 'assistant' | 'user';
@@ -82,23 +83,24 @@ export function CarbonAssistant() {
   const [transportMiles, setTransportMiles] = useState(5);
   const [mealsWithMeat, setMealsWithMeat] = useState(1);
   const [wasteBags, setWasteBags] = useState(1);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // default to dark theme for premium tech aesthetic
   const assistantTimeoutRef = useRef<number | null>(null);
 
   /**
    * Clears any queued assistant reply so unmounted components never try to update stale state.
    */
-  const clearQueuedAssistantReply = (): void => {
+  const clearQueuedAssistantReply = useCallback((): void => {
     if (assistantTimeoutRef.current !== null) {
-      window.clearTimeout(assistantTimeoutRef.current);
+      window.clearTimeout(assistantTimeoutRef.current as any);
       assistantTimeoutRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       clearQueuedAssistantReply();
     };
-  }, []);
+  }, [clearQueuedAssistantReply]);
 
   /**
    * Recalculates emissions when the daily activity inputs change.
@@ -136,7 +138,7 @@ export function CarbonAssistant() {
    *
    * @param text - The message text shown in the chat log.
    */
-  const addMessage = (text: string): void => {
+  const addMessage = useCallback((text: string): void => {
     try {
       clearQueuedAssistantReply();
       setMessages((currentMessages: ChatMessage[]) => [...currentMessages, { role: 'user', text }]);
@@ -149,7 +151,7 @@ export function CarbonAssistant() {
           }
         ]);
         assistantTimeoutRef.current = null;
-      }, responseDelayMs);
+      }, responseDelayMs) as any;
     } catch {
       setMessages((currentMessages: ChatMessage[]) => [
         ...currentMessages,
@@ -159,14 +161,14 @@ export function CarbonAssistant() {
         }
       ]);
     }
-  };
+  }, [clearQueuedAssistantReply]);
 
   /**
    * Updates the household type from the select field.
    *
    * @param rawValue - The selected value from the dropdown.
    */
-  const handleHouseholdChange = (rawValue: string): void => {
+  const handleHouseholdChange = useCallback((rawValue: string): void => {
     try {
       if (rawValue === 'apartment' || rawValue === 'house') {
         setHouseholdType(rawValue);
@@ -174,14 +176,14 @@ export function CarbonAssistant() {
     } catch {
       setHouseholdType('apartment');
     }
-  };
+  }, []);
 
   /**
    * Resets the tracked context back to the baseline demo state.
    *
    * This gives reviewers a quick way to test the UI from a known starting point.
    */
-  const resetContext = (): void => {
+  const resetContext = useCallback((): void => {
     try {
       clearQueuedAssistantReply();
       setMessages(initialMessages);
@@ -204,14 +206,14 @@ export function CarbonAssistant() {
         }
       ]);
     }
-  };
+  }, [clearQueuedAssistantReply]);
 
   /**
    * Updates the primary transport mode.
    *
    * @param rawValue - The selected transport mode from the dropdown.
    */
-  const handleTransportChange = (rawValue: string): void => {
+  const handleTransportChange = useCallback((rawValue: string): void => {
     try {
       if (
         rawValue === 'walk' ||
@@ -225,7 +227,7 @@ export function CarbonAssistant() {
     } catch {
       setTransportMode('public-transit');
     }
-  };
+  }, []);
 
   /**
    * Updates a numeric field using a safe parse and a fallback.
@@ -234,7 +236,7 @@ export function CarbonAssistant() {
    * @param setter - React state setter for the numeric field.
    * @param fallback - Fallback value if parsing fails.
    */
-  const handleNumericChange = (
+  const handleNumericChange = useCallback((
     rawValue: string,
     setter: React.Dispatch<React.SetStateAction<number>>,
     fallback: number
@@ -244,7 +246,7 @@ export function CarbonAssistant() {
     } catch {
       setter(fallback);
     }
-  };
+  }, []);
 
   /**
    * Updates a boolean field using a safe checkbox conversion.
@@ -252,7 +254,7 @@ export function CarbonAssistant() {
    * @param checked - The checkbox state from the UI.
    * @param setter - React state setter for the boolean field.
    */
-  const handleBooleanChange = (
+  const handleBooleanChange = useCallback((
     checked: boolean,
     setter: React.Dispatch<React.SetStateAction<boolean>>
   ): void => {
@@ -261,143 +263,233 @@ export function CarbonAssistant() {
     } catch {
       setter(false);
     }
-  };
+  }, []);
+
+  const handleApartmentTransitClick = useCallback((): void => {
+    addMessage('I live in an apartment and mostly use transit.');
+  }, [addMessage]);
+
+  const handleHouseCarClick = useCallback((): void => {
+    addMessage('I live in a house and drive most days.');
+  }, [addMessage]);
+
+  const handleWfhFocusClick = useCallback((): void => {
+    addMessage('I work from home and want low-effort actions.');
+  }, [addMessage]);
+
+  const handleThemeToggleClick = useCallback((): void => {
+    setIsDarkMode((prev: boolean) => !prev);
+  }, []);
 
   return (
-    <main className="shell">
-      <section className="hero" aria-labelledby="app-title">
-        <p className="eyebrow">Challenge 3</p>
-        <h1 id="app-title">Carbon Footprint Awareness Platform</h1>
-        <p className="hero-copy">
-          A conversational carbon coach that learns your daily context, estimates emissions, and suggests small, realistic actions.
-        </p>
-      </section>
+    <main className={`shell ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+      <header className="header-bar">
+        <div className="hero" aria-labelledby="app-title">
+          <p className="eyebrow">Challenge 3</p>
+          <h1 id="app-title">Carbon Footprint Awareness Platform</h1>
+          <p className="hero-copy">
+            A conversational carbon coach that learns your daily context, estimates emissions, and suggests small, realistic actions.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={handleThemeToggleClick}
+          aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+        </button>
+      </header>
 
       <section className="grid" aria-label="Carbon tracking workspace">
-        <div className="panel chat-panel">
+        <section className="panel chat-panel" aria-labelledby="chat-heading">
           <div className="panel-header">
-            <h2>Conversation</h2>
+            <h2 id="chat-heading">Conversation</h2>
             <p>Capture context naturally, one answer at a time.</p>
           </div>
           <div className="chat-log" role="log" aria-live="polite" aria-relevant="additions text">
-            {messages.map((message, index) => (
+            {messages.map((message: ChatMessage, index: number) => (
               <div key={`${message.role}-${index}`} className={`bubble ${message.role}`}>
                 {message.text}
               </div>
             ))}
           </div>
           <div className="quick-actions" aria-label="Quick responses">
-            <button type="button" onClick={() => addMessage('I live in an apartment and mostly use transit.')}>Apartment + transit</button>
-            <button type="button" onClick={() => addMessage('I live in a house and drive most days.')}>House + car</button>
-            <button type="button" onClick={() => addMessage('I work from home and want low-effort actions.')}>WFH focus</button>
+            <button type="button" onClick={handleApartmentTransitClick}>Apartment + transit</button>
+            <button type="button" onClick={handleHouseCarClick}>House + car</button>
+            <button type="button" onClick={handleWfhFocusClick}>WFH focus</button>
             <button type="button" onClick={resetContext}>Reset demo state</button>
           </div>
-        </div>
+        </section>
 
-        <div className="panel form-panel">
+        <section className="panel form-panel" aria-labelledby="form-heading">
           <div className="panel-header">
-            <h2>Daily context</h2>
+            <h2 id="form-heading">Daily context</h2>
             <p>Used to adapt recommendations and emissions estimates.</p>
           </div>
 
           <div className="field-grid">
-            <label>
-              Home type
-              <select value={householdType} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleHouseholdChange(event.target.value)}>
+            <div className="field-group">
+              <label htmlFor="householdType">Home type</label>
+              <select
+                id="householdType"
+                value={householdType}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleHouseholdChange(event.target.value)}
+              >
                 <option value="apartment">Apartment</option>
                 <option value="house">House</option>
               </select>
-            </label>
+            </div>
 
-            <label>
-              Main transport
-              <select value={transportMode} onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleTransportChange(event.target.value)}>
+            <div className="field-group">
+              <label htmlFor="transportMode">Main transport</label>
+              <select
+                id="transportMode"
+                value={transportMode}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleTransportChange(event.target.value)}
+              >
                 {transportOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
-            </label>
+            </div>
 
-            <label>
-              Electricity use today (kWh)
-              <input type="number" min="0" step="0.1" value={electricityKwh} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setElectricityKwh, electricityKwh)} />
-            </label>
+            <div className="field-group">
+              <label htmlFor="electricityKwh">Electricity use today (kWh)</label>
+              <input
+                id="electricityKwh"
+                type="number"
+                min="0"
+                step="0.1"
+                value={electricityKwh}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setElectricityKwh, electricityKwh)}
+              />
+            </div>
 
-            <label>
-              Transport miles today
-              <input type="number" min="0" step="0.1" value={transportMiles} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setTransportMiles, transportMiles)} />
-            </label>
+            <div className="field-group">
+              <label htmlFor="transportMiles">Transport miles today</label>
+              <input
+                id="transportMiles"
+                type="number"
+                min="0"
+                step="0.1"
+                value={transportMiles}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setTransportMiles, transportMiles)}
+              />
+            </div>
 
-            <label>
-              Meat-based meals today
-              <input type="number" min="0" step="1" value={mealsWithMeat} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setMealsWithMeat, mealsWithMeat)} />
-            </label>
+            <div className="field-group">
+              <label htmlFor="mealsWithMeat">Meat-based meals today</label>
+              <input
+                id="mealsWithMeat"
+                type="number"
+                min="0"
+                step="1"
+                value={mealsWithMeat}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setMealsWithMeat, mealsWithMeat)}
+              />
+            </div>
 
-            <label>
-              Waste bags generated
-              <input type="number" min="0" step="1" value={wasteBags} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setWasteBags, wasteBags)} />
-            </label>
+            <div className="field-group">
+              <label htmlFor="wasteBags">Waste bags generated</label>
+              <input
+                id="wasteBags"
+                type="number"
+                min="0"
+                step="1"
+                value={wasteBags}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setWasteBags, wasteBags)}
+              />
+            </div>
 
-            <label>
-              Shower minutes
-              <input type="number" min="0" step="1" value={showerMinutes} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setShowerMinutes, showerMinutes)} />
-            </label>
+            <div className="field-group">
+              <label htmlFor="showerMinutes">Shower minutes</label>
+              <input
+                id="showerMinutes"
+                type="number"
+                min="0"
+                step="1"
+                value={showerMinutes}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleNumericChange(event.target.value, setShowerMinutes, showerMinutes)}
+              />
+            </div>
           </div>
 
           <div className="checkbox-row">
-            <label>
-              <input type="checkbox" checked={workingFromHome} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setWorkingFromHome)} />
-              Work from home
-            </label>
-            <label>
-              <input type="checkbox" checked={hasCar} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setHasCar)} />
-              Own or regularly use a car
-            </label>
-            <label>
-              <input type="checkbox" checked={apartmentSharedUtilities} onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setApartmentSharedUtilities)} />
-              Shared apartment utilities
-            </label>
+            <div className="checkbox-group">
+              <input
+                id="workingFromHome"
+                type="checkbox"
+                checked={workingFromHome}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setWorkingFromHome)}
+              />
+              <label htmlFor="workingFromHome">Work from home</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                id="hasCar"
+                type="checkbox"
+                checked={hasCar}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setHasCar)}
+              />
+              <label htmlFor="hasCar">Own or regularly use a car</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                id="apartmentSharedUtilities"
+                type="checkbox"
+                checked={apartmentSharedUtilities}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBooleanChange(event.target.checked, setApartmentSharedUtilities)}
+              />
+              <label htmlFor="apartmentSharedUtilities">Shared apartment utilities</label>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="panel results-panel">
+        <section className="panel results-panel" aria-labelledby="results-heading">
           <div className="panel-header">
-            <h2>Today’s footprint</h2>
+            <h2 id="results-heading">Today’s footprint</h2>
             <p>Calculated with a pure utility file for easy testing.</p>
           </div>
 
           <div className="stats" aria-label="Daily emissions summary">
-            <div>
-              <strong>{formatKg(emissions.totalKg)}</strong>
-              <span>Total estimated emissions</span>
+            <div className="stat-card">
+              <span id="label-total" className="stat-label">Total estimated emissions</span>
+              <strong aria-labelledby="label-total" className="stat-value">{formatKg(emissions.totalKg)}</strong>
             </div>
-            <div>
-              <strong>{formatKg(emissions.electricityKg)}</strong>
-              <span>Electricity</span>
+            <div className="stat-card">
+              <span id="label-electricity" className="stat-label">Electricity</span>
+              <strong aria-labelledby="label-electricity" className="stat-value">{formatKg(emissions.electricityKg)}</strong>
             </div>
-            <div>
-              <strong>{formatKg(emissions.transportKg)}</strong>
-              <span>Transport</span>
+            <div className="stat-card">
+              <span id="label-transport" className="stat-label">Transport</span>
+              <strong aria-labelledby="label-transport" className="stat-value">{formatKg(emissions.transportKg)}</strong>
             </div>
-            <div>
-              <strong>{formatKg(emissions.foodKg)}</strong>
-              <span>Food</span>
+            <div className="stat-card">
+              <span id="label-food" className="stat-label">Food</span>
+              <strong aria-labelledby="label-food" className="stat-value">{formatKg(emissions.foodKg)}</strong>
             </div>
           </div>
 
-          <div className="actions">
-            <h3>Personalized micro-actions</h3>
+          <section className="actions" aria-labelledby="actions-heading">
+            <h3 id="actions-heading">Personalized micro-actions</h3>
             <ul>
-              {recommendations.map((action) => (
+              {recommendations.map((action: MicroAction) => (
                 <li key={action.title}>
-                  <strong>{action.title} {action.impact === 'high' && '⚡'}</strong>
-                  <span>{action.reason}</span>
+                  <strong className="action-title">
+                    {action.title}
+                    {action.impact === 'high' && (
+                      <span className="impact-badge" aria-label="High impact badge">⚡</span>
+                    )}
+                  </strong>
+                  <span className="action-reason">{action.reason}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
+          </section>
+        </section>
       </section>
     </main>
   );
 }
+
