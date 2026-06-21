@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   description: 'A conversational carbon coach with adaptive recommendations and testable emissions logic.'
 };
 
+/**
+ * Wraps the entire app in the root HTML document.
+ *
+ * @param children - Nested application content.
+ * @returns The HTML and body shell for the application.
+ */
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">

@@ -30,13 +30,28 @@ const KG_PER_MEAT_MEAL = 0.9;
 // Landfill waste with methane consideration
 const KG_PER_WASTE_BAG = 0.12;
 
-// Clamp negative and NaN values to prevent invalid calculations
+/**
+ * Clamps any non-finite or negative number to zero so downstream emissions math remains stable.
+ *
+ * @param value - Raw numeric input from the UI or a test case.
+ * @returns A safe non-negative number that can be used in emissions formulas.
+ */
 function clampNonNegative(value: number): number {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-// Pure calculation function: accepts activity, returns emission breakdown by category
-// All coefficients are EPA-backed or recognized climate science standards
+/**
+ * Calculates the daily carbon footprint from the user's reported activity.
+ *
+ * Business logic:
+ * - Electricity is multiplied by the grid-intensity factor.
+ * - Transport is adjusted by mode because cars, ride-shares, and transit have different emissions.
+ * - Food and waste are modeled as simple per-unit emissions to keep the logic testable.
+ * - The function is pure and deterministic so unit tests can verify every branch.
+ *
+ * @param activity - Daily user activity data collected by the assistant UI.
+ * @returns A full emissions breakdown with category totals and a final daily total.
+ */
 export function calculateDailyEmissions(activity: DailyActivity): EmissionBreakdown {
   const electricityKg = clampNonNegative(activity.electricityKwh) * KG_PER_KWH;
   const transportMiles = clampNonNegative(activity.transportMiles);
@@ -62,6 +77,12 @@ export function calculateDailyEmissions(activity: DailyActivity): EmissionBreakd
   };
 }
 
+/**
+ * Formats a number of kilograms of CO2e for display in the dashboard.
+ *
+ * @param value - Numeric emissions value already computed by the pure utility.
+ * @returns A fixed-width human-readable label suitable for the UI.
+ */
 export function formatKg(value: number): string {
   return `${value.toFixed(2)} kg CO2e`;
 }

@@ -17,8 +17,17 @@ export type MicroAction = {
   impact: 'high' | 'medium' | 'low';
 };
 
-// Inference engine: evaluates user context and generates ranked micro-actions.
-// Rules prioritize high-impact changes that fit the user's lifestyle constraints.
+/**
+ * Generates the transport-focused recommendation for the current context.
+ *
+ * Business logic:
+ * - Car ownership gets the highest-impact suggestion because vehicle miles dominate transport emissions.
+ * - Ride-share users are nudged toward transit because shared public transport is still more efficient.
+ * - Transit and active-travel users get maintenance suggestions that preserve low-carbon habits.
+ *
+ * @param context - Current household and transport context.
+ * @returns One prioritized transport recommendation.
+ */
 function buildTransportAction(context: UserContext): MicroAction {
   // Car owners: highest per-mile emissions (0.404 kg/mi), so trip bundling has outsized impact.
   if (context.transportMode === 'car' || context.hasCar) {
@@ -55,6 +64,17 @@ function buildTransportAction(context: UserContext): MicroAction {
   };
 }
 
+/**
+ * Generates the home-energy recommendation for the current context.
+ *
+ * Business logic:
+ * - Houses get sealing/efficiency guidance because envelope losses are usually larger.
+ * - Apartments with shared utilities get building-management suggestions with collective leverage.
+ * - Other apartments get quick thermostat adjustments because they are low-friction and actionable.
+ *
+ * @param context - Current household and home-utility context.
+ * @returns One prioritized home-efficiency recommendation.
+ */
 function buildHomeAction(context: UserContext): MicroAction {
   // Houses lose more energy through air leaks; sealing is high-ROI.
   if (context.householdType === 'house') {
@@ -82,6 +102,17 @@ function buildHomeAction(context: UserContext): MicroAction {
   };
 }
 
+/**
+ * Generates the lifestyle recommendation for the current context.
+ *
+ * Business logic:
+ * - Work-from-home users are nudged toward device consolidation to avoid idle energy waste.
+ * - Longer showers are targeted because hot-water use is a daily, easy-to-change emissions source.
+ * - Stable routines are preserved otherwise so the user can compare future changes meaningfully.
+ *
+ * @param context - Current lifestyle context from the assistant.
+ * @returns One prioritized lifestyle recommendation.
+ */
 function buildLifestyleAction(context: UserContext): MicroAction {
   // WFH workers: concentrated screen and appliance use beats always-on gadgets.
   if (context.workingFromHome) {
@@ -109,7 +140,12 @@ function buildLifestyleAction(context: UserContext): MicroAction {
   };
 }
 
-// Generate three highest-priority micro-actions based on user context.
+/**
+ * Builds the full ranked set of micro-actions for the user.
+ *
+ * @param context - Current user profile and activity signals.
+ * @returns Exactly three recommendations covering transport, home, and lifestyle.
+ */
 export function generateMicroActions(context: UserContext): MicroAction[] {
   return [buildTransportAction(context), buildHomeAction(context), buildLifestyleAction(context)];
 }
