@@ -1,30 +1,53 @@
-import type { HouseholdType, TransportMode } from './carbon';\n\n// User context captures household and lifestyle signals used to generate personalized recommendations.\n// These are dynamic inputs that can be updated as the user interacts.\nexport type UserContext = {\n  householdType: HouseholdType;\n  workingFromHome: boolean;\n  hasCar: boolean;\n  transportMode: TransportMode;\n  showerMinutes: number;\n  apartmentSharedUtilities: boolean;\n};\n\nexport type MicroAction = {\n  title: string;\n  reason: string;\n  impact: 'high' | 'medium' | 'low';\n};
+import type { HouseholdType, TransportMode } from './carbon';
 
+// User context captures household and lifestyle signals used to generate personalized recommendations.
+// These are dynamic inputs that can be updated as the user interacts with the app.
+export type UserContext = {
+  householdType: HouseholdType;
+  workingFromHome: boolean;
+  hasCar: boolean;
+  transportMode: TransportMode;
+  showerMinutes: number;
+  apartmentSharedUtilities: boolean;
+};
+
+export type MicroAction = {
+  title: string;
+  reason: string;
+  impact: 'high' | 'medium' | 'low';
+};
+
+// Inference engine: evaluates user context and generates ranked micro-actions.
+// Rules prioritize high-impact changes that fit the user's lifestyle constraints.
 function buildTransportAction(context: UserContext): MicroAction {
+  // Car owners: highest per-mile emissions (0.404 kg/mi), so trip bundling has outsized impact.
   if (context.transportMode === 'car' || context.hasCar) {
     return {
       title: 'Bundle errands into one car trip',
-      reason: 'Combining trips cuts repeated cold starts and reduces unnecessary driving.',
+      reason: 'Combining trips cuts cold-start waste and repeated acceleration.',
       impact: 'high'
     };
   }
 
+  // Ride-share: per-passenger emissions are lower than a solo car, but transit is still better.
   if (context.transportMode === 'ride-share') {
     return {
       title: 'Switch one ride-share trip to transit each day',
-      reason: 'Public transit spreads emissions across more passengers per mile.',
+      reason: 'Transit spreads vehicle emissions across many passengers per vehicle.',
       impact: 'high'
     };
   }
 
+  // Transit users: last-mile optimization is the remaining lever.
   if (context.transportMode === 'public-transit') {
     return {
       title: 'Pair transit with a short walk or bike ride',
-      reason: 'Replacing even a short segment with active travel lowers per-trip emissions.',
+      reason: 'Replacing even a short segment with active travel cuts per-trip carbon.',
       impact: 'medium'
     };
   }
 
+  // Walk/bike baseline: reinforce the already-low-carbon behavior.
   return {
     title: 'Keep the low-carbon commute habit',
     reason: 'Walking and biking already keep transport emissions near zero.',
@@ -33,6 +56,7 @@ function buildTransportAction(context: UserContext): MicroAction {
 }
 
 function buildHomeAction(context: UserContext): MicroAction {
+  // Houses lose more energy through air leaks; sealing is high-ROI.
   if (context.householdType === 'house') {
     return {
       title: 'Seal one drafty window or door this week',
@@ -41,6 +65,7 @@ function buildHomeAction(context: UserContext): MicroAction {
     };
   }
 
+  // Apartment dwellers with shared utilities: focus on collective building upgrades.
   if (context.apartmentSharedUtilities) {
     return {
       title: 'Ask building management about LED common areas',
@@ -49,6 +74,7 @@ function buildHomeAction(context: UserContext): MicroAction {
     };
   }
 
+  // Private apartment utilities: thermostat tweaks are the fastest low-friction win.
   return {
     title: 'Lower cooling use by 1 degree for one hour tonight',
     reason: 'Small thermostat adjustments create measurable savings without changing routine.',
@@ -57,29 +83,33 @@ function buildHomeAction(context: UserContext): MicroAction {
 }
 
 function buildLifestyleAction(context: UserContext): MicroAction {
+  // WFH workers: concentrated screen and appliance use beats always-on gadgets.
   if (context.workingFromHome) {
     return {
       title: 'Schedule one device-free power window today',
-      reason: 'Shifting screen and appliance use to a shorter window makes idle energy easier to avoid.',
+      reason: 'Grouping screen time and appliance use cuts idle energy waste.',
       impact: 'low'
     };
   }
 
+  // Long showers: water heating is a major daily emission source.
   if (context.showerMinutes > 10) {
     return {
       title: 'Cut your shower by 2 minutes tomorrow',
-      reason: 'Hot water is an easy daily source of emissions, and small reductions add up fast.',
+      reason: 'Hot water heating is an easy daily source; small reductions compound.',
       impact: 'medium'
     };
   }
 
+  // Default: consistency enables future tracking and comparison of changes.
   return {
     title: 'Keep your daily routine stable and track one new habit',
-    reason: 'Consistency makes carbon tracking meaningful because changes are easier to compare.',
+    reason: 'Consistency makes carbon tracking meaningful; changes are easier to compare.',
     impact: 'low'
   };
 }
 
+// Generate three highest-priority micro-actions based on user context.
 export function generateMicroActions(context: UserContext): MicroAction[] {
   return [buildTransportAction(context), buildHomeAction(context), buildLifestyleAction(context)];
 }
