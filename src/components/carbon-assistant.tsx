@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { DailyActivity, HouseholdType, TransportMode } from '@/lib/carbon';
-import { calculateDailyEmissions, formatKg } from '@/lib/carbon';
-import { generateMicroActions } from '@/lib/recommendations';
+import type { DailyActivity, HouseholdType, TransportMode } from '../lib/carbon';
+import { calculateDailyEmissions, formatKg } from '../lib/carbon';
+import { generateMicroActions } from '../lib/recommendations';
 
 type ChatMessage = {
   role: 'assistant' | 'user';
