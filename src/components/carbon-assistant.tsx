@@ -83,15 +83,15 @@ export function CarbonAssistant() {
   const [transportMiles, setTransportMiles] = useState(5);
   const [mealsWithMeat, setMealsWithMeat] = useState(1);
   const [wasteBags, setWasteBags] = useState(1);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // default to dark theme for premium tech aesthetic
-  const assistantTimeoutRef = useRef<number | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false); // default to light theme, togglable to dark
+  const assistantTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Clears any queued assistant reply so unmounted components never try to update stale state.
    */
   const clearQueuedAssistantReply = useCallback((): void => {
     if (assistantTimeoutRef.current !== null) {
-      window.clearTimeout(assistantTimeoutRef.current as any);
+      clearTimeout(assistantTimeoutRef.current);
       assistantTimeoutRef.current = null;
     }
   }, []);
@@ -142,7 +142,7 @@ export function CarbonAssistant() {
     try {
       clearQueuedAssistantReply();
       setMessages((currentMessages: ChatMessage[]) => [...currentMessages, { role: 'user', text }]);
-      assistantTimeoutRef.current = window.setTimeout((): void => {
+      assistantTimeoutRef.current = setTimeout((): void => {
         setMessages((currentMessages: ChatMessage[]) => [
           ...currentMessages,
           {
@@ -151,7 +151,7 @@ export function CarbonAssistant() {
           }
         ]);
         assistantTimeoutRef.current = null;
-      }, responseDelayMs) as any;
+      }, responseDelayMs);
     } catch {
       setMessages((currentMessages: ChatMessage[]) => [
         ...currentMessages,

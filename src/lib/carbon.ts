@@ -37,7 +37,12 @@ const KG_PER_WASTE_BAG = 0.12;
  * @returns A safe non-negative number that can be used in emissions formulas.
  */
 function clampNonNegative(value: number): number {
-  return Number.isFinite(value) && value > 0 ? value : 0;
+  try {
+    const num = Number(value);
+    return Number.isFinite(num) ? Math.max(0, num) : 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**
@@ -53,28 +58,38 @@ function clampNonNegative(value: number): number {
  * @returns A full emissions breakdown with category totals and a final daily total.
  */
 export function calculateDailyEmissions(activity: DailyActivity): EmissionBreakdown {
-  const electricityKg = clampNonNegative(activity.electricityKwh) * KG_PER_KWH;
-  const transportMiles = clampNonNegative(activity.transportMiles);
-  // Transport emissions vary by mode; car is highest per passenger
-  const transportKg =
-    activity.transportMode === 'car'
-      ? transportMiles * KG_PER_CAR_MILE
-      : activity.transportMode === 'ride-share'
-        ? transportMiles * KG_PER_RIDESHARE_MILE
-        : activity.transportMode === 'public-transit'
-          ? transportMiles * KG_PER_PUBLIC_TRANSIT_MILE
-          : 0; // walk and bike have zero direct emissions
-  const foodKg = clampNonNegative(activity.mealsWithMeat) * KG_PER_MEAT_MEAL;
-  const wasteKg = clampNonNegative(activity.wasteBags) * KG_PER_WASTE_BAG;
-  const totalKg = electricityKg + transportKg + foodKg + wasteKg;
+  try {
+    const electricityKg = clampNonNegative(activity?.electricityKwh) * KG_PER_KWH;
+    const transportMiles = clampNonNegative(activity?.transportMiles);
+    // Transport emissions vary by mode; car is highest per passenger
+    const transportKg =
+      activity?.transportMode === 'car'
+        ? transportMiles * KG_PER_CAR_MILE
+        : activity?.transportMode === 'ride-share'
+          ? transportMiles * KG_PER_RIDESHARE_MILE
+          : activity?.transportMode === 'public-transit'
+            ? transportMiles * KG_PER_PUBLIC_TRANSIT_MILE
+            : 0; // walk and bike have zero direct emissions
+    const foodKg = clampNonNegative(activity?.mealsWithMeat) * KG_PER_MEAT_MEAL;
+    const wasteKg = clampNonNegative(activity?.wasteBags) * KG_PER_WASTE_BAG;
+    const totalKg = electricityKg + transportKg + foodKg + wasteKg;
 
-  return {
-    electricityKg,
-    transportKg,
-    foodKg,
-    wasteKg,
-    totalKg
-  };
+    return {
+      electricityKg,
+      transportKg,
+      foodKg,
+      wasteKg,
+      totalKg
+    };
+  } catch {
+    return {
+      electricityKg: 0,
+      transportKg: 0,
+      foodKg: 0,
+      wasteKg: 0,
+      totalKg: 0
+    };
+  }
 }
 
 /**
@@ -84,5 +99,11 @@ export function calculateDailyEmissions(activity: DailyActivity): EmissionBreakd
  * @returns A fixed-width human-readable label suitable for the UI.
  */
 export function formatKg(value: number): string {
-  return `${value.toFixed(2)} kg CO2e`;
+  try {
+    const num = Number(value);
+    const safeNum = Number.isFinite(num) ? Math.max(0, num) : 0;
+    return `${safeNum.toFixed(2)} kg CO2e`;
+  } catch {
+    return '0.00 kg CO2e';
+  }
 }

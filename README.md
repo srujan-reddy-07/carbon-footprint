@@ -1,20 +1,16 @@
 # Carbon Footprint Awareness Platform
 
-**Challenge Vertical:** Carbon Footprint Tracker (Challenge 3)
+**Chosen Vertical:** [Challenge 3] Carbon Footprint Awareness Platform
 
 A conversational carbon awareness coach and interactive tracking platform built with Next.js and TypeScript. The application combines a natural chat tracker, a real-time emissions estimator, and a rule-based recommendation engine.
 
 ---
 
-## Chosen Vertical: Carbon Footprint Tracker
-This project is designed around the **Carbon Footprint Tracker** persona. It focuses on helping individuals understand their daily carbon footprints, capturing lifestyle inputs through natural chat actions, and providing immediately actionable recommendations to reduce emissions.
+## Chosen Vertical
+[Challenge 3] Carbon Footprint Awareness Platform
 
-## Approach & Design Philosophy
-1. **Separation of Concerns**: Business logic is separated from UI. Emission calculations and recommendation generation are kept in side-effect-free, pure TypeScript modules (`src/lib/carbon.ts` and `src/lib/recommendations.ts`), making the core logic extremely testable.
-2. **Conversational First**: Users can update their profile parameters either via chat quick-replies or standard form controls. Changes immediately propagate through React state.
-3. **High Performance**: UI updates are computed synchronously via React `useMemo` hooks, keeping the interface fluid and lag-free.
-4. **Inclusive Accessibility**: Design features conform to WCAG AA color contrast guidelines, explicit form control associations, aria landmarks, and screen reader labels.
-5. **No External Libraries for Logic**: Pure React state, callbacks, and basic browser bindings ensure a lightweight compilation under 10 MB.
+## Our Approach
+Conversational AI coaching that dynamically switches logic based on user housing/transport contexts. The profile signals (household type, transport habits, WFH state) are used by the adaptive inference engine to determine custom recommendations and recalculate carbon scores in real time.
 
 ---
 

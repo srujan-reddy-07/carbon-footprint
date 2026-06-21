@@ -30,28 +30,28 @@
 }
 
 .dark-theme {
-  --bg: #090e11;
-  --bg-gradient-1: rgba(16, 185, 129, 0.08);
-  --bg-gradient-2: rgba(5, 150, 105, 0.03);
-  --panel: rgba(15, 23, 30, 0.65);
-  --panel-border: rgba(52, 211, 153, 0.12);
+  --bg: #0b0f19;
+  --bg-gradient-1: rgba(16, 185, 129, 0.12);
+  --bg-gradient-2: rgba(99, 102, 241, 0.08);
+  --panel: rgba(17, 24, 39, 0.7);
+  --panel-border: rgba(52, 211, 153, 0.16);
   --text: #f8fafc;
   --muted: #94a3b8;
   --accent: #34d399;
   --accent-light: rgba(52, 211, 153, 0.1);
   --accent-2: #10b981;
-  --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(52, 211, 153, 0.02);
-  --shadow-hover: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(52, 211, 153, 0.05);
-  --bubble-assistant: rgba(52, 211, 153, 0.08);
+  --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(52, 211, 153, 0.03);
+  --shadow-hover: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(52, 211, 153, 0.06);
+  --bubble-assistant: rgba(52, 211, 153, 0.12);
   --bubble-user: #10b981;
-  --input-bg: rgba(15, 23, 30, 0.95);
-  --input-border: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(17, 24, 39, 0.95);
+  --input-border: rgba(255, 255, 255, 0.12);
   --button-hover: #059669;
-  --stat-bg: rgba(15, 23, 30, 0.8);
+  --stat-bg: rgba(20, 29, 47, 0.8);
   --stat-border: #34d399;
-  --action-bg: rgba(52, 211, 153, 0.04);
+  --action-bg: rgba(52, 211, 153, 0.05);
   --action-border: #10b981;
-  --scroll-thumb: rgba(255, 255, 255, 0.1);
+  --scroll-thumb: rgba(255, 255, 255, 0.15);
 }
 
 * {
